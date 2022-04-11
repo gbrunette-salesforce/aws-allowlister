@@ -1,10 +1,12 @@
 import os
+
 from bs4 import BeautifulSoup
-from aws_allowlister.shared.utils import chomp, chomp_keep_single_spaces
+from sqlalchemy.orm.session import Session
+
+from aws_allowlister.shared.utils import chomp_keep_single_spaces, clean_standard_name
 from aws_allowlister.database.raw_scraping_data import RawScrapingData
 from aws_allowlister.scrapers.aws_docs import get_aws_html
 from aws_allowlister.scrapers.common import get_table_ids, clean_status_cell, clean_sdks, get_service_name
-from sqlalchemy.orm.session import Session
 
 
 def scrape_standard_table(db_session: Session, link: str, destination_folder: str, file_name: str, download: bool = True):
@@ -30,13 +32,13 @@ def scrape_standard_table(db_session: Session, link: str, destination_folder: st
             # Get the standard name based on the "tab" name
             tab = table.contents[1]
             standard_name = chomp_keep_single_spaces(str(tab.contents[0]))
+            standard_name = clean_standard_name(standard_name)
 
             # Skip certain cases based on inconsistent formatting
-            exclusions = ["FedRAMP", "DoD CC SRG", "HIPAA BAA", "MTCS", "HITRUST CSF"]
+            exclusions = ["FedRAMP", "DoD_CC_SRG", "HIPAA_BAA", "MTCS", "HITRUST_CSF", "GSMA"]
             if standard_name in exclusions:
                 continue
 
-            print(f"Scraping table for {standard_name}")
             rows = table.find_all("tr")
             if len(rows) == 0:
                 continue
@@ -67,12 +69,23 @@ def scrape_standard_table(db_session: Session, link: str, destination_folder: st
                     status=this_status,
                     status_text=this_status_cell_contents,
                 )
-                for sdk in these_sdks:
+
+                if len(these_sdks) > 0:
+                    for sdk in these_sdks:
+                        raw_scraping_data.add_entry_to_database(
+                            db_session=db_session,
+                            compliance_standard_name=standard_name,
+                            sdk=sdk,
+                            service_name=this_service_name,
+                        )
+                else:
                     raw_scraping_data.add_entry_to_database(
                         db_session=db_session,
                         compliance_standard_name=standard_name,
-                        sdk=sdk,
+                        sdk="",
                         service_name=this_service_name,
                     )
+
                 results.append(result)
+
     return results

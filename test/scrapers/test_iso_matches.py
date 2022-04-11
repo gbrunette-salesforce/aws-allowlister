@@ -14,7 +14,7 @@ class IsoQATestCase(unittest.TestCase):
         expected_results = [
             "mobiletargeting",
             "macie",
-            "kafka"
+            "guardduty"
         ]
         print(results)
         # print(len(expected_results))

@@ -7,6 +7,7 @@ from aws_allowlister.scrapers.tables.iso import scrape_iso_table
 from aws_allowlister.scrapers.tables.hipaa import scrape_hipaa_table
 from aws_allowlister.scrapers.tables.fedramp import scrape_fedramp_table
 from aws_allowlister.scrapers.tables.dodccsrg import scrape_dodccsrg_table
+from aws_allowlister.scrapers.tables.gsma import scrape_gsma_table
 from aws_allowlister.scrapers.tables.hitrust import scrape_hitrust_table
 
 
@@ -27,17 +28,23 @@ def create_empty_compliance_database(db_session):
                 SOC="",
                 PCI="",
                 ISO="",
-                FedRAMP_High="",
                 FedRAMP_Moderate="",
+                FedRAMP_High="",
+                FedRAMP_NA="",
                 DoDCCSRG_IL2_EW="",
                 DoDCCSRG_IL2_GC="",
                 DoDCCSRG_IL4_GC="",
                 DoDCCSRG_IL5_GC="",
+                DoDCCSRG_IL6_GC="",
                 HIPAA="",
-                HITRUST="",
+                HITRUST_CSF="",
                 IRAP="",
                 OSPAR="",
                 FINMA="",
+                GSMA_US="",
+                GSMA_EU="",
+                K_ISMS="",
+                ENS_HIGH="",
             )
         )
         db_session.commit()
@@ -59,6 +66,7 @@ def build_database(download: bool):
     # Scrape the tables that follow the standard format.
     #   These compliance frameworks, and services that are certified by them, are located at:
     #       https://aws.amazon.com/compliance/services-in-scope/
+
     scrape_standard_table(
         db_session=db_session,
         link="https://aws.amazon.com/compliance/services-in-scope/",
@@ -107,6 +115,15 @@ def build_database(download: bool):
 
     # HITRUST docs follow a 2 column format
     scrape_hitrust_table(
+        db_session=db_session,
+        link="https://aws.amazon.com/compliance/services-in-scope/",
+        destination_folder=html_docs_folder,
+        file_name="services-in-scope.html",
+        download=download
+    )
+
+    # GSMA docs follow a 3 column format
+    scrape_gsma_table(
         db_session=db_session,
         link="https://aws.amazon.com/compliance/services-in-scope/",
         destination_folder=html_docs_folder,

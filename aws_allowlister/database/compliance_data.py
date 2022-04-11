@@ -73,17 +73,23 @@ class ComplianceData:
                 SOC="",
                 PCI="",
                 ISO="",
-                FedRAMP_High="",
                 FedRAMP_Moderate="",
+                FedRAMP_High="",
+                FedRAMP_NA="",
                 DoDCCSRG_IL2_EW="",
                 DoDCCSRG_IL2_GC="",
                 DoDCCSRG_IL4_GC="",
                 DoDCCSRG_IL5_GC="",
+                DoDCCSRG_IL6_GC="",
                 HIPAA="",
-                HITRUST="",
+                HITRUST_CSF="",
                 IRAP="",
                 OSPAR="",
                 FINMA="",
+                GSMA_US="",
+                GSMA_EU="",
+                K_ISMS="",
+                ENS_HIGH="",
             )
         )
         db_session.commit()
@@ -205,10 +211,15 @@ class ComplianceData:
                     )
 
     def apply_overrides_for_direct_inserts_per_framework(self, db_session, overrides=None):
+
         if not isinstance(overrides, Overrides):
             raise Exception("Overrides should be an object class of type Overrides")
 
         print("\nOVERRIDES: SECTION 4: Direct inserts, per framework")
+
+        if overrides.direct_inserts is None:
+            return
+
         for standard in self.standard_names(db_session):
             # If 'SOC' exists under 'direct_inserts'
             service_keys = overrides.direct_inserts.get(standard)
@@ -248,6 +259,9 @@ class ComplianceData:
 
         if not isinstance(overrides, Overrides):
             raise Exception("Overrides should be an object class of type Overrides")
+
+        if overrides.direct_removals is None:
+            return
 
         for standard in self.standard_names(db_session):
             # If 'SOC' exists under 'direct_removals'

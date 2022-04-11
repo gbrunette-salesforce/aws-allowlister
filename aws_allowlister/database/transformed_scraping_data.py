@@ -196,6 +196,10 @@ class TransformedScrapingData:
     def override_service_names_to_iam_names(self, db_session, overrides):
         if not isinstance(overrides, Overrides):
             raise Exception("Overrides should be an object class of type Overrides")
+
+        if overrides.service_names_to_iam_names is None:
+            return
+
         print("\nOVERRIDES: SECTION 1: override_service_names_to_iam_names")
         print(
             "\nApplying overrides to the database: Section 1, 'Service name means IAM name'"
@@ -267,8 +271,13 @@ class TransformedScrapingData:
                     )
 
     def override_sdk_names_to_iam_names(self, db_session, overrides):
+
         if not isinstance(overrides, Overrides):
             raise Exception("Overrides should be an object class of type Overrides")
+
+        if overrides.sdk_names_to_iam_names is None:
+            return
+
         print("\nOVERRIDES: SECTION 2: override_sdk_names_to_iam_names")
         staging_area = {}
         content_to_remove = []
@@ -344,6 +353,10 @@ class TransformedScrapingData:
     def override_global_inserts(self, db_session, overrides):
         if not isinstance(overrides, Overrides):
             raise Exception("Overrides should be an object class of type Overrides")
+
+        if overrides.global_inserts is None:
+            return
+
         standards = self.standards(db_session=db_session)
         print("\nOVERRIDES: SECTION 3: override_global_inserts")
         print("New content:")
@@ -369,4 +382,3 @@ class TransformedScrapingData:
                         service_name=service_name,
                         sdk_name=service_prefix,
                     )
-

@@ -13,8 +13,8 @@ class UtilsTestCase(unittest.TestCase):
 
         service_name_pairs = {
             "a4b": "Alexa for Business",
-            "access-analyzer": "IAM Access Analyzer",
-            "account": "AWS Accounts",
+            "access-analyzer": "AWS IAM Access Analyzer",
+            "account": "AWS Account Management",
             "acm": "AWS Certificate Manager"
             # .. etc.
             #   Try opening the SQLite database in DB Browser for SQLite to examine it more.

@@ -76,17 +76,23 @@ class ComplianceTable(Base):
     SOC = Column(String(50))
     PCI = Column(String(50))
     ISO = Column(String(50))
-    FedRAMP_High = Column(String(50))
     FedRAMP_Moderate = Column(String(50))
+    FedRAMP_High = Column(String(50))
+    FedRAMP_NA = Column(String(50))
     DoDCCSRG_IL2_EW = Column(String(50))
     DoDCCSRG_IL2_GC = Column(String(50))
     DoDCCSRG_IL4_GC = Column(String(50))
     DoDCCSRG_IL5_GC = Column(String(50))
+    DoDCCSRG_IL6_GC = Column(String(50))
     HIPAA = Column(String(50))
-    HITRUST = Column(String(50))
+    HITRUST_CSF = Column(String(50))
     IRAP = Column(String(50))
     OSPAR = Column(String(50))
     FINMA = Column(String(50))
+    GSMA_US = Column(String(50))
+    GSMA_EU = Column(String(50))
+    K_ISMS = Column(String(50))
+    ENS_HIGH = Column(String(50))
 
     def __repr__(self):
         return (
@@ -95,15 +101,21 @@ class ComplianceTable(Base):
             f"SOC='{self.SOC}', "
             f"PCI='{self.PCI}', "
             f"ISO='{self.ISO}', "
-            f"FedRAMP_High='{self.FedRAMP_High}', "
             f"FedRAMP_Moderate='{self.FedRAMP_Moderate}', "
+            f"FedRAMP_High='{self.FedRAMP_High}', "
+            f"FedRAMP_NA='{self.FedRAMP_NA}', "
             f"DoDCCSRG_IL2_EW='{self.DoDCCSRG_IL2_EW}', "
             f"DoDCCSRG_IL2_GC={self.DoDCCSRG_IL2_GC}', "
             f"DoDCCSRG_IL4_GC={self.DoDCCSRG_IL4_GC}', "
             f"DoDCCSRG_IL5_GC={self.DoDCCSRG_IL5_GC}', "
+            f"DoDCCSRG_IL6_GC={self.DoDCCSRG_IL6_GC}', "
             f"HIPAA='{self.HIPAA}', "
-            f"HITRUST='{self.HITRUST}', "
+            f"HITRUST_CSF='{self.HITRUST_CSF}', "
             f"IRAP='{self.IRAP}', "
             f"OSPAR='{self.OSPAR}', "
             f"FINMA='{self.FINMA}')>"
+            f"GSMA_US='{self.GSMA_US}')>"
+            f"GSMA_EU='{self.GSMA_EU}')>"
+            f"K_ISMS='{self.K_ISMS}')>"
+            f"ENS_HIGH='{self.ENS_HIGH}')>"
         )

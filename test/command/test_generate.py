@@ -108,6 +108,7 @@ class GenerateMethodsTestCase(unittest.TestCase):
         result = self.runner.invoke(generate, ["--json-list"])
         self.assertTrue(result.exit_code == 0)
         # If --json-list is used, it should include the string "service_name"
+        print ("RESULT = " + str(result.output))
         self.assertTrue("service_name" in result.output)
         # It should also have a real service name somewhere in the output - like "Amazon S3"
         self.assertTrue("Amazon S3" in result.output)

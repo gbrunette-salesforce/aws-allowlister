@@ -11,9 +11,30 @@ class ComplianceDataTestCase(unittest.TestCase):
     def test_standard_names(self):
         """database.scrapers.compliance_data.ComplianceData.standard_names"""
         results = compliance_data.standard_names(db_session=db_session)
-        # print(result)
-        expected_results = ['SOC', 'PCI', 'ISO', 'FedRAMP_High', 'FedRAMP_Moderate','DoDCCSRG_IL2_EW','DoDCCSRG_IL2_GC',
-                            'DoDCCSRG_IL4_GC','DoDCCSRG_IL5_GC' ,'HIPAA', 'HITRUST', 'IRAP', 'OSPAR', 'FINMA']
+        print(f"RESULTS = {results}")
+        expected_results = [
+            "SOC",
+            "PCI",
+            "ISO",
+            "FedRAMP_Moderate",
+            "FedRAMP_High",
+            "FedRAMP_NA",
+            "DoDCCSRG_IL2_EW",
+            "DoDCCSRG_IL2_GC",
+            "DoDCCSRG_IL4_GC",
+            "DoDCCSRG_IL5_GC",
+            "DoDCCSRG_IL6_GC",
+            "HIPAA",
+            "HITRUST_CSF",
+            "IRAP",
+            "OSPAR",
+            "FINMA",
+            "GSMA_US",
+            "GSMA_EU",
+            "K_ISMS",
+            "ENS_HIGH"
+        ]
+
         self.assertListEqual(results, expected_results)
 
     def test_get_rows(self):
@@ -40,13 +61,13 @@ class ComplianceDataTestCase(unittest.TestCase):
 
     def test_get_compliance_status(self):
         """database.scrapers.compliance_data.ComplianceData.get_compliance_status"""
-        # print("getting the status")
+        print("getting the status")
         status = compliance_data.get_compliance_status(
             db_session=db_session,
-            service_prefix="account",
+            service_prefix="ec2",
             compliance_standard="SOC"
         )
-        # print(status)
+        print(status)
         self.assertEqual(status, True)
 
     def test_get_rows_matching_service_prefix(self):

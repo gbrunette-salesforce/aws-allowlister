@@ -1,24 +1,27 @@
 import logging
 import json
 import click
+
 from click_option_group import optgroup, MutuallyExclusiveOptionGroup
-from policy_sentry.querying.all import get_all_service_prefixes
+from policy_sentry.querying.all import get_all_service_prefixes, get_service_authorization_url
 from tabulate import tabulate
+
 from aws_allowlister.database.database import connect_db
 from aws_allowlister.database.compliance_data import ComplianceData
 from aws_allowlister import set_stream_logger
 from aws_allowlister.shared import utils
-from policy_sentry.querying.all import get_service_authorization_url
+
 logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
 
 
 def validate_comma_separated_aws_services(ctx, param, value):
+    include_services = None
     if value is not None:
         try:
             include_services = value.split(",")
-            return include_services
         except ValueError:
             raise click.BadParameter('Supply the AWS services in a comma separated string.')
+    return include_services
 
 
 def validate_services_from_file(services: list):
@@ -32,7 +35,9 @@ def validate_services_from_file(services: list):
     name="generate",
     short_help="Generate an AWS AllowList policy based on compliance requirements",
 )
+
 @optgroup.group("Compliance Standard Selection", help="")
+
 @optgroup.option(
     "--all",
     "-a",
@@ -40,23 +45,36 @@ def validate_services_from_file(services: list):
     required=False,
     is_flag=True,
     default=True,
-    help="SOC, PCI, ISO, HIPAA, FedRAMP_High, and FedRAMP_Moderate.",
+    help="All supported compliance frameworks",
 )
+
+# Provide options for all of the commercial baseline frameworks.
+
 @optgroup.option(
     "--soc",
     "-s",
     required=False,
     is_flag=True,
     default=False,
-    help="Include SOC-compliant services",
+    help="Include services compliant with SOC",
 )
+
 @optgroup.option(
-    "--pci",
+    "--iso",
+    "-i",
+    required=False,
+    is_flag=True,
+    default=False,
+    help="Include services compliant with ISO 27001",
+)
+
+@optgroup.option(
+    "--pci-dss",
     "-p",
     required=False,
     is_flag=True,
     default=False,
-    help="Include PCI-compliant services",
+    help="Include services compliant with PCI DSS",
 )
 @optgroup.option(
     "--hipaa",
@@ -64,15 +82,27 @@ def validate_services_from_file(services: list):
     required=False,
     is_flag=True,
     default=False,
-    help="Include HIPAA-compliant services",
+    help="Include services compliance with HIPAA",
 )
+
 @optgroup.option(
-    "--iso",
-    "-i",
+    "--hitrust-csf",
+    "-hc",
     required=False,
     is_flag=True,
     default=False,
-    help="Include ISO-compliant services",
+    help="Include services compliant with HITRUST CSF",
+)
+
+# Provide options for all of the GovCloud frameworks.
+
+@optgroup.option(
+    "--fedramp-moderate",
+    "-fm",
+    required=False,
+    is_flag=True,
+    default=False,
+    help="Include services compliant with FedRAMP Moderate",
 )
 @optgroup.option(
     "--fedramp-high",
@@ -80,65 +110,132 @@ def validate_services_from_file(services: list):
     required=False,
     is_flag=True,
     default=False,
-    help="Include FedRAMP High",
+    help="Include services compliant with FedRAMP High",
 )
 @optgroup.option(
-    "--fedramp-moderate",
-    "-fm",
+    "--fedramp-na",
+    "-fn",
     required=False,
     is_flag=True,
     default=False,
-    help="Include FedRAMP Moderate",
+    help="Include services not applicable for FedRAMP",
 )
+
 @optgroup.option(
     "--dodccsrg-il2-ew",
     "-d2e",
     required=False,
     is_flag=True,
     default=False,
-    help="Include DoD CC SRG IL2 (East/West)",
+    help="Include services compliant with DoD CC SRG IL2 (East/West)",
 )
+
 @optgroup.option(
     "--dodccsrg-il2-gc",
     "-d2g",
     required=False,
     is_flag=True,
     default=False,
-    help="Include DoD CC SRG IL2 (GovCloud)",
+    help="Include services compliant with DoD CC SRG IL2 (GovCloud)",
 )
+
 @optgroup.option(
     "--dodccsrg-il4-gc",
     "-d4g",
     required=False,
     is_flag=True,
     default=False,
-    help="Include DoD CC SRG IL4 (GovCloud)",
+    help="Include services compliant with DoD CC SRG IL4 (GovCloud)",
 )
+
 @optgroup.option(
     "--dodccsrg-il5-gc",
     "-d5g",
     required=False,
     is_flag=True,
     default=False,
-    help="Include DoD CC SRG IL5 (GovCloud)",
+    help="Include services compliant with DoD CC SRG IL5 (GovCloud)",
 )
+
 @optgroup.option(
-    "--hitrust-csf",
-    "-hc",
+    "--dodccsrg-il6-gc",
+    "-d6g",
     required=False,
     is_flag=True,
     default=False,
-    help="Include HITRUST CSF",
+    help="Include services compliant with DoD CC SRG IL6 (GovCloud)",
 )
+
+# Provide options for all of the international or other frameworks.
+
+@optgroup.option(
+    "--gsma-us",
+    "-gu",
+    required=False,
+    is_flag=True,
+    default=False,
+    help="Include services compliant with GSMA in the U.S.",
+)
+
+@optgroup.option(
+    "--gsma-eu",
+    "-ge",
+    required=False,
+    is_flag=True,
+    default=False,
+    help="Include services compliant with GSMA in the E.U.",
+)
+
 @optgroup.option(
     "--irap",
     "-ir",
     required=False,
     is_flag=True,
     default=False,
-    help="Include IRAP",
+    help="Include services compliant with IRAP Protected",
 )
+
+@optgroup.option(
+    "--ospar",
+    "-ospar",
+    required=False,
+    is_flag=True,
+    default=False,
+    help="Include services compliant with OSPAR",
+)
+
+@optgroup.option(
+    "--finma",
+    "-finma",
+    required=False,
+    is_flag=True,
+    default=False,
+    help="Include services compliant with FINMA",
+)
+
+@optgroup.option(
+    "--k-isms",
+    "-ki",
+    required=False,
+    is_flag=True,
+    default=False,
+    help="Include services compliant with K-ISMS",
+)
+
+@optgroup.option(
+    "--ens-high",
+    "-eh",
+    required=False,
+    is_flag=True,
+    default=False,
+    help="Include services compliant with ENS High",
+)
+
+
+# Define the options related to the forcible inclusion of AWS services.
+
 @optgroup.group("Forcibly Include AWS Services", help="", cls=MutuallyExclusiveOptionGroup)
+
 @optgroup.option(
     "--include",
     default=None,
@@ -146,13 +243,18 @@ def validate_services_from_file(services: list):
     callback=validate_comma_separated_aws_services,
     help="Include specific AWS IAM services, specified in a comma separated string."
 )
+
 @optgroup.option(
     "--include-file",
     default=None,
     type=click.Path(exists=True),
     help="A YAML file that contains a list of AWS IAM services to include."
 )
+
+# Define the options related to the forcible exclusion of AWS services.
+
 @optgroup.group("Forcibly Exclude AWS Services", help="", cls=MutuallyExclusiveOptionGroup)
+
 @optgroup.option(
     "--exclude",
     type=str,
@@ -160,13 +262,18 @@ def validate_services_from_file(services: list):
     callback=validate_comma_separated_aws_services,
     help="Exclude specific AWS IAM services, specified in a comma separated string."
 )
+
 @optgroup.option(
     "--exclude-file",
     default=None,
     type=click.Path(exists=True),
     help="A YAML file that contains a list of AWS IAM services to exclude."
 )
+
+# Define the options related to the output of this program.
+
 @optgroup.group("Output options", help="", cls=MutuallyExclusiveOptionGroup)
+
 @optgroup.option(
     "--table",
     type=bool,
@@ -174,6 +281,7 @@ def validate_services_from_file(services: list):
     is_flag=True,
     help="Output a markdown-formatted table of the Service Prefixes alongside Service Names."
 )
+
 @optgroup.option(
     "--json-list",
     type=bool,
@@ -181,6 +289,7 @@ def validate_services_from_file(services: list):
     is_flag=True,
     help="Output a JSON object of the service prefixes, service names, and authorization URLs."
 )
+
 @optgroup.option(
     "--excluded-table",
     type=bool,
@@ -188,6 +297,7 @@ def validate_services_from_file(services: list):
     is_flag=True,
     help="Output a markdown-formatted table of *excluded* services."
 )
+
 @optgroup.option(
     "--excluded-json-list",
     type=bool,
@@ -195,16 +305,23 @@ def validate_services_from_file(services: list):
     is_flag=True,
     help="Output a JSON object of *excluded* service prefixes, service names, and authorization URLs."
 )
+
 @click.option(
     '--quiet', '-q',
     is_flag=True,
     default=False,
 )
-def generate(all_standards, soc, pci, hipaa, iso, fedramp_high, fedramp_moderate, 
-             dodccsrg_il2_ew, dodccsrg_il2_gc, dodccsrg_il4_gc, dodccsrg_il5_gc, hitrust_csf, irap,
+
+
+def generate(all_standards, soc, iso, pci_dss, hipaa, hitrust_csf,
+             fedramp_moderate, fedramp_high, fedramp_na,
+             dodccsrg_il2_ew, dodccsrg_il2_gc, dodccsrg_il4_gc, dodccsrg_il5_gc, dodccsrg_il6_gc,
+             irap, gsma_us, gsma_eu, ospar, finma, k_isms, ens_high,
              include, include_file, exclude, exclude_file,
              table, json_list, excluded_table, excluded_json_list, quiet):
+
     standards = []
+
     if quiet:
         log_level = getattr(logging, "WARNING")
         set_stream_logger(level=log_level)
@@ -213,27 +330,36 @@ def generate(all_standards, soc, pci, hipaa, iso, fedramp_high, fedramp_moderate
         set_stream_logger(level=log_level)
 
     # If include-file argument is supplied, then read the file and use it as the include args.
+
     if include_file:
         include = utils.read_yaml_file(include_file)
         validate_services_from_file(services=include)
+
     # Same thing with exclude-file argument
+
     if exclude_file:
         exclude = utils.read_yaml_file(exclude_file)
         validate_services_from_file(services=exclude)
 
     # Compile list of standards
+
     if soc:
         standards.append("SOC")
-    if pci:
+    if iso:
+        standards.append("ISO")
+    if pci_dss:
         standards.append("PCI")
     if hipaa:
         standards.append("HIPAA")
-    if iso:
-        standards.append("ISO")
-    if fedramp_high:
-        standards.append("FedRAMP_High")
+    if hitrust_csf:
+        standards.append("HITRUST_CSF")
+
     if fedramp_moderate:
         standards.append("FedRAMP_Moderate")
+    if fedramp_high:
+        standards.append("FedRAMP_High")
+    if fedramp_na:
+        standards.append("FedRAMP_NA")
     if dodccsrg_il2_ew:
         standards.append("DoDCCSRG_IL2_EW")
     if dodccsrg_il2_gc:
@@ -242,48 +368,53 @@ def generate(all_standards, soc, pci, hipaa, iso, fedramp_high, fedramp_moderate
         standards.append("DoDCCSRG_IL4_GC")
     if dodccsrg_il5_gc:
         standards.append("DoDCCSRG_IL5_GC")
-    if hitrust_csf:
-        standards.append("HITRUST")
+    if dodccsrg_il6_gc:
+        standards.append("DoDCCSRG_IL6_GC")
+
+    if gsma_us:
+        standards.append("GSMA_US")
+    if gsma_eu:
+        standards.append("GSMA_EU")
     if irap:
         standards.append("IRAP")
+    if ospar:
+        standards.append("OSPAR")
+    if finma:
+        standards.append("FINMA")
+    if k_isms:
+        standards.append("K_ISMS")
+    if ens_high:
+        standards.append("ENS_HIGH")
+
+    default_standards = [
+       "SOC",
+       "PCI",
+       "ISO",
+    ]
+
     if (
         all_standards
         and not soc
-        and not pci
-        and not hipaa
         and not iso
-        and not fedramp_high
-        and not fedramp_moderate
-        and not dodccsrg_il2_ew
-        and not dodccsrg_il2_gc
-        and not dodccsrg_il4_gc
-        and not dodccsrg_il5_gc
-        and not hitrust_csf
-        and not irap
+        and not pci_dss
     ):
-        standards = ["SOC", "PCI", "HIPAA", "ISO", "FedRAMP_High", "FedRAMP_Moderate"]
+        standards = default_standards
         logger.info(f"--all was selected. The policy will include the default standard(s): {str(', '.join(standards))}")
+
     if (
         not all_standards
         and not soc
-        and not pci
-        and not hipaa
         and not iso
-        and not fedramp_high
-        and not fedramp_moderate
-        and not dodccsrg_il2_ew
-        and not dodccsrg_il2_gc
-        and not dodccsrg_il4_gc
-        and not dodccsrg_il5_gc
-        and not hitrust_csf
-        and not irap
+        and not pci_dss
     ):
-        standards = ["SOC", "PCI", "HIPAA", "ISO", "FedRAMP_High", "FedRAMP_Moderate"]
+        standards = default_standards
         logger.info(f"--all was selected. The policy will include the default standard(s): {str(', '.join(standards))}")
+
     logger.info(f"Note: to silence these logs, supply the argument '--quiet'")
     logger.info(f"Policies for standard(s): {str(', '.join(standards))}")
 
     # If --table is provided, print as Markdown table. Otherwise, print the JSON policy
+
     if table:
         services = generate_allowlist_service_prefixes(standards, include, exclude)
         services_tabulated = []
@@ -303,6 +434,7 @@ def generate(all_standards, soc, pci, hipaa, iso, fedramp_high, fedramp_moderate
     elif json_list:
         services_json = {}
         services = generate_allowlist_service_prefixes(standards, include, exclude)
+        print ("SERVICES == " + str(services))
         for service_prefix in services:
             service_name = utils.get_service_name_matching_iam_service_prefix(service_prefix)
             try:

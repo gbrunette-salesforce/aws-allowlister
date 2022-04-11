@@ -15,7 +15,7 @@ class HipaaQATestCase(unittest.TestCase):
             "a4b",
             "elasticloadbalancing",
             "healthlake",
-            "macie",
+            "macie2",
             "mobiletargeting"
         ]
         # print(len(results))

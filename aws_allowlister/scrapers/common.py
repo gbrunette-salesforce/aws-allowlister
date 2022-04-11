@@ -1,4 +1,4 @@
-from bs4 import Tag, NavigableString, BeautifulSoup
+from bs4 import Tag, NavigableString
 from aws_allowlister.shared.utils import chomp, clean_service_name
 
 
@@ -15,6 +15,14 @@ def get_service_name(some_cells):
         service_name = str(service_name_cell)
     service_name = clean_service_name(service_name)
     return service_name
+
+
+def clean_sdk(cell):
+
+    cell_content = chomp(cell[1].contents[0])
+    if "<a" in cell_content or "]" in cell_content:
+        cell_content = cell[1].contents[0].text
+    return cell_content
 
 
 def clean_sdks(some_cells):
@@ -42,25 +50,6 @@ def clean_status_cell(cells):
     # Slice syntax in case there are only two columns
     status_cell_contents = cells[-1].contents[0]
     status, status_cell_contents = clean_status_cell_contents(status_cell_contents)
-    # if status_cell_contents is None:
-    #     status = False
-    # elif isinstance(status_cell_contents, str):
-    #     status_cell_contents = chomp(status_cell_contents)
-    # elif isinstance(status_cell_contents, Tag):
-    #     status_cell_contents = chomp(status_cell_contents.text)
-    # elif isinstance(status_cell_contents, NavigableString):
-    #     status_cell_contents = chomp(str(status_cell_contents))
-    # else:
-    #     print("idk what type it is")
-    #
-    # if status_cell_contents is None:
-    #     status = False
-    # elif "✓" in status_cell_contents:
-    #     status = True
-    # elif status_cell_contents != "✓":
-    #     status = False
-    # else:
-    #     status = True
 
     return status, status_cell_contents
 
@@ -80,6 +69,10 @@ def clean_status_cell_contents(status_cell_contents):
     if status_cell_contents is None:
         status = False
     elif "✓" in status_cell_contents:
+        status = True
+    elif "JAB Review" in status_cell_contents:
+        status = True
+    elif "DISA Review" in status_cell_contents:
         status = True
     elif status_cell_contents != "✓":
         status = False

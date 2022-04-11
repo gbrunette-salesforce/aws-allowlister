@@ -13,7 +13,7 @@ class IRAPQATestCase(unittest.TestCase):
         )
         expected_results = [
             "connect",
-            "macie",
+            "macie2",
             "appmesh",
             "cloudhsm",
             "ssm"

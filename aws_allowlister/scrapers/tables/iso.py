@@ -1,9 +1,11 @@
 import os
+
 from bs4 import BeautifulSoup, Tag
+from sqlalchemy.orm.session import Session
+
 from aws_allowlister.scrapers.aws_docs import get_aws_html
 from aws_allowlister.database.raw_scraping_data import RawScrapingData
 from aws_allowlister.shared.utils import clean_service_name
-from sqlalchemy.orm.session import Session
 
 
 def scrape_iso_table(db_session: Session, link: str, destination_folder: str, file_name: str, download: bool = True):

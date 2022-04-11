@@ -1,11 +1,13 @@
 import os
-import requests
+
 from bs4 import BeautifulSoup
+
 from policy_sentry.querying.all import get_all_service_prefixes
+from sqlalchemy.orm.session import Session
+
 from aws_allowlister.database.raw_scraping_data import RawScrapingData
 from aws_allowlister.scrapers.aws_docs import get_aws_html
 from aws_allowlister.shared.utils import clean_service_name
-from sqlalchemy.orm.session import Session
 
 ALL_SERVICE_PREFIXES = get_all_service_prefixes()
 
